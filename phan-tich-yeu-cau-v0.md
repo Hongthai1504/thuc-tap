@@ -6,21 +6,13 @@
 - Chưa tích hợp các hệ thống phức tạp.
 2. Phân tích yêu cầu chức năng
 
-2.1. Nhóm khách (chưa đăng ký/đăng nhập -> Guest) và khách hàng (Customer)
-Nhóm chức năng            Chi tiết chức năng            Yêu cầu đầu ra
-Quản lý Tài khoản         Đăng ký & Đăng nhập           -> Cho phép tạo tài khoản mới bằng
-                                                        Email/Password. Đăng nhập để lưu
-                                                        lịch sử mua hàng.
-Duyệt sản phẩm            Xem và tìm kiếm               -> Hiển thị danh sách sản phầm theo 
-                                                        danh mục. Tìm kiếm sản phẩm theo tền.
-                                                        Xem chi tiết hành ảnh, giá cả, mô tả
-                                                        của một sản phầm.
-Giỏ hàng                  Thêm/ Sửa/ Xóa                -> Thêm sản phẩm vào giỏ. thay đổi số
-                                                        lượng mua. Xóa sản phẩm khỏi giỏi. Dữ
-                                                        liệu giỏ hàng không bị mất khi tải 
-                                                        lại trang.
-Theo dỏi                  Lịch sử đơn hàng              Khách hàng đã đăng nhập có thể xem lại
-                                                        các đơn đã đặt và trạng thái hiện tại
-                                                        của đơn hàng.
+### 2.1. Nhóm khách (chưa đăng ký/đăng nhập -> Guest) và khách hàng (Customer)
+
+| Nhóm chức năng | Chi tiết chức năng | Yêu cầu đầu ra |
+| :--- | :--- | :--- |
+| **Quản lý Tài khoản** | Đăng ký & Đăng nhập | -> Cho phép tạo tài khoản mới bằng Email/Password. Đăng nhập để lưu lịch sử mua hàng. |
+| **Duyệt sản phẩm** | Xem và tìm kiếm | -> Hiển thị danh sách sản phẩm theo danh mục. Tìm kiếm sản phẩm theo tên. Xem chi tiết hình ảnh, giá cả, mô tả của một sản phẩm. |
+| **Giỏ hàng** | Thêm/ Sửa/ Xóa | -> Thêm sản phẩm vào giỏ, thay đổi số lượng mua. Xóa sản phẩm khỏi giỏ. Dữ liệu giỏ hàng không bị mất khi tải lại trang. |
+| **Theo dõi** | Lịch sử đơn hàng | Khách hàng đã đăng nhập có thể xem lại các đơn đã đặt và trạng thái hiện tại của đơn hàng. |
 
 2.2. Nhóm Quản trị viên (Admin)
