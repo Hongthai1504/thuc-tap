@@ -1,3 +1,5 @@
+# PHÂN TÍCH YÊU CẦU
+
 ### 1. Mục tiêu và phạm vi dự án 
 - Mục tiêu: Xây dựng một website thương mại điện tử cơ bản cho phép người dùng tham khảo, tìm kiếm sản phẩm và đặt hàng trực tuyến. Đồng thời cung cấp một trang quản trị (Admin Dashboard) để chủ cửa hàng quản lý dữ liệu sản phẩm và theo dõi tiến độ đơn hàng.
 - Phạm vi dự án:
@@ -31,3 +33,45 @@
 - Bảo mật cơ bản (Security):
     + Mật khẩu của người dùng phải được băm (hash) trước khi lưu xuống cơ sở dữ liệu, tuyệt đối không lưu dạng plaintext.
     + Các API dành cho Admin phải có cơ chế xác thực mới được phép thực thi.
+
+# ĐẶC TẢ & THIẾT KẾ HỆ THỐNG
+
+### 1. Thiết kế hệ thống (System Architecture)
+Trình bày cách mảnh ghép giúp cho website hoạt động đồng bộ. Sử dụng mô hình **Client - Server** làm chuẩn
+- **Client (Frontend)**: Trình duyệt của người dùng (Chrome). Giao diện web chịu trách nhiệm thu thập thao tác của người dùng gửi các yêu cầu (Request) thông qua các giao thức HTTP/HTTPS.
+- **Server (Backend)**: Máy chủ nhận yêu cầu, xử lý logic (tính toán giỏ hàng, xác thực đăng nhập) và trả về kết quả (Response).
+- **Databse (Cơ sở dữ liệu)**: Nơi lưu giữ thông tin thực tế. Để bảo mật, chỉ có Server mới được quyền nói chuyện trực tiếp với Database, Client tuyệt đối không được truy cập.
+
+### 2. Đặc tả Cơ sở dữ liệu (Database Schema)
+
+#### Bảng 1: Users
+*Lưu trữ tài khoản và phân quyền quản trị.*
+- id (PK): Mã định danh duy nhất.
+- email, password: Thông tin đăng nhập (Mật khẩu phải được băm/mã hóa).
+- full_name, phone: Thông tin giao hàng mặc định (thông tin cá nhân).
+- role: xác định là admin hay customer.
+
+#### Bảng 2: Categories
+- id (PK): Mã danh mục
+- name: Tên
+
+#### Bảng 3: Products
+- id (PK): Mã sản phẩm.
+- category_id (FK): Liên kết tới bảng Categories.
+- name, description: Tên và mô tả chi tiết.
+- price: Giá bán hiện tại.
+- stock: Số lượng tồn kho.
+
+#### Bảng 4: Orders
+*Bảng này đóng vai trò như một "Hóa đơn tổng" của khách hàng.*
+- id (PK): Mã đơn hàng.
+- user_id (FK): Trỏ về bảng Users.
+- total_amount: Tổng tiền của cả đơn.
+- status: Trạng thái (Pending (Đang chờ), Shipping (Đang giao), Completed (Hoàn thành)).
+
+#### Bảng 5: Order_Details 
+*Vì một đơn hàng có thể mua cùng lúc nhiều sản phẩm khác nhau, ta cần bảng này để gỡ rối mối quan hệ nhiều - nhiều giữa bảng Orders và Products.*
+- order_id (FK): Thuộc đơn hàng nào.
+- product_id (FK): Mua sẩn phẩm nào.
+- quantity: Số lượng mua.
+- price_at_purchase: Giá tại thời điểm mua.
