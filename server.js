@@ -1,7 +1,10 @@
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
+const JWT_SECRET = "secret_key_internship_project";
 const app = express();
 app.use(cors());
 app.use(express.json()); // To read JSON data
@@ -23,7 +26,7 @@ db.connect((err) => {
 });
 
 // 2. Write an API to display a list of products (GET /api/products)
-app.get("/api/products", (reg, res) => {
+app.get("/api/products", (req, res) => {
   // Query to retrieve all products
   const sql = "SELECT * FROM Products";
 
@@ -41,5 +44,116 @@ const PORT = 3000;
 app.listen(PORT, () => {
   console.log(
     "The server backend is currently running at http://localhost:${PORT}",
+  );
+});
+
+// 4. APT for registering a new account
+app.post("/api/register", async (req, res) => {
+  const { email, password, full_name, phone } = req.body;
+
+  try {
+    // Hash the password into a long string of characters for security
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const sql =
+      "INSERT INTO Users (email, password, full_name, phone) VALUE (?, ?, ?, ?)";
+
+    db.query(sql, [email, hashedPassword, full_name, phone], (err, result) => {
+      if (err)
+        return res.status(400).json({
+          error: "The email address already exists or there is a data error!",
+        });
+      res.json({ message: "Register successful!" });
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Server error!" });
+  }
+});
+
+// 5. Login API
+app.post("/api/login", (req, res) => {
+  const { email, password } = req.body;
+  const sql = "SELECT * FROM Users WHERE email = ?";
+
+  db.query(sql, [email], async (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(401).json({ error: "Incorrect email or password!" });
+    }
+
+    const user = results[0];
+
+    // Compare the password entered by the user with the hashed password in the database.
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(401).json({ error: "Incorrect email or password!" });
+
+    // JWT cards are valid for one day
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
+      expiresIn: "1d",
+    });
+    res.json({ message: "Login successful!", token: token });
+  });
+});
+
+// 6. Middleware protection (Check JWT tag)
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  // Tokens are usually sent with the word "Bearer" attched, cut it onpen to get the actual code
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token)
+    return res
+      .status(401)
+      .json({ error: "You need to log in to use this funtion." });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err)
+      return res.status(403).json({ error: "Invalid or expired token!" });
+
+    req.user = user; // Save the customer ID information in the request for continued use.
+    next(); // Allow passage through the checkpoint.
+  });
+};
+
+// 7. Ordering API (Requires going through the authenticateToken station)
+app.post("/api/orders", authenticateToken, (req, res) => {
+  const user_id = req.user.id; // Get the secure ID from the token, not from the client's submission
+  const { shipping_address, total_amount, cartItems } = req.body;
+
+  // A. Save the overview information to the Orders table
+  const inserOrderSql =
+    "INSERT INTO Orders (user_id, total_amount, shipping_address) VALUES (?, ?, ?)";
+
+  db.query(
+    inserOrderSql,
+    [user_id, total_amount, shipping_address],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: "Order creation error!" });
+
+      const order_id = result.insertId; // Get the ID of the order just created
+
+      // B & C. Save details for each item and deduct from inventory
+      cartItems.forEach((item) => {
+        const insertDetailSql =
+          "INSERT INTO Order_Details (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)";
+        db.query(
+          insertDetailSql,
+          [order_id, item.product_id, item.quantity, item.price],
+          (err) => {
+            if (!err) {
+              // Excluding stock in the Products table
+              const updateStockSql =
+                "UPDATE Products SET stock = stock - ? WHERE id = ?";
+              db.query(updateStockSql, [item.quantity, item.product_id]);
+            }
+          },
+        );
+      });
+
+      res.json({
+        message: "Order placed successfully!",
+        order_id: order_id,
+        status: "pending",
+      });
+    },
   );
 });
