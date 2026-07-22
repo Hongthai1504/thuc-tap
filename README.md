@@ -21,4 +21,5 @@ Quá trình của dự án thực tập tại trường với Đề tài: Hệ t
 <img width="1366" height="689" alt="server js" src="https://github.com/user-attachments/assets/0e85d7b4-7971-42ee-83d9-548135d9cddd" />
 
   - Thanh toán: POST /api/orders để nhận thông tin về User và Cart, tính tổng tiền, lưu vào bảng Orders/Order_Details, và trừ đi số lượng tồn kho (Stock) trong Products.
+    - Viết API Thanh toán
   - Bảo mật: Validate dữ liệu đẻ chống SQL Injection/XSS. Áp dụng thư viện bcrypt để băm mật khẩu (không lưu plaintext) và sử dụng JWT (JSON Web Token) để duy trì đăng nhập.
