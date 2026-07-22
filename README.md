@@ -20,6 +20,102 @@ Quá trình của dự án thực tập tại trường với Đề tài: Hệ t
     - Bước đầu khởi dộng server và tạo API Hiển thị thông qua fil **server.js**
 <img width="1366" height="689" alt="server js" src="https://github.com/user-attachments/assets/0e85d7b4-7971-42ee-83d9-548135d9cddd" />
 
-  - Thanh toán: POST /api/orders để nhận thông tin về User và Cart, tính tổng tiền, lưu vào bảng Orders/Order_Details, và trừ đi số lượng tồn kho (Stock) trong Products.
-    - Viết API Thanh toán
-  - Bảo mật: Validate dữ liệu đẻ chống SQL Injection/XSS. Áp dụng thư viện bcrypt để băm mật khẩu (không lưu plaintext) và sử dụng JWT (JSON Web Token) để duy trì đăng nhập.
+  - Thanh toán: POST /api/orders để nhận thông tin về User và Cart, tính tổng tiền, lưu vào bảng Orders/Order_Details, và trừ đi số lượng tồn kho (Stock) trong Products. <br>
+    ***Tạo API Xử lý đơn hàng***
+  ```
+  app.post("/api/orders", authenticateToken, (req, res) => {
+  const user_id = req.user.id; // Get the secure ID from the token, not from the client's submission
+  const { shipping_address, total_amount, cartItems } = req.body;
+
+  // A. Save the overview information to the Orders table
+  const inserOrderSql =
+    "INSERT INTO Orders (user_id, total_amount, shipping_address) VALUES (?, ?, ?)";
+
+  db.query(
+    inserOrderSql,
+    [user_id, total_amount, shipping_address],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: "Order creation error!" });
+
+      const order_id = result.insertId; // Get the ID of the order just created
+
+      // B & C. Save details for each item and deduct from inventory
+      cartItems.forEach((item) => {
+        const insertDetailSql =
+          "INSERT INTO Order_Details (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)";
+        db.query(
+          insertDetailSql,
+          [order_id, item.product_id, item.quantity, item.price],
+          (err) => {
+            if (!err) {
+              // Excluding stock in the Products table
+              const updateStockSql =
+                "UPDATE Products SET stock = stock - ? WHERE id = ?";
+              db.query(updateStockSql, [item.quantity, item.product_id]);
+            }
+          },
+        );
+      });
+
+      res.json({
+        message: "Order placed successfully!",
+        order_id: order_id,
+        status: "pending",
+      });
+    },
+  );
+});
+  ```
+  - Bảo mật: Validate dữ liệu đẻ chống SQL Injection/XSS. Áp dụng thư viện bcrypt để băm mật khẩu (không lưu plaintext) và sử dụng JWT (JSON Web Token) để duy trì đăng nhập. <br>
+    ***Tạo API đăng ký tài khoản***
+
+```
+  app.post("/api/register", async (req, res) => {
+  const { email, password, full_name, phone } = req.body;
+
+  try {
+    // Hash the password into a long string of characters for security
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const sql =
+      "INSERT INTO Users (email, password, full_name, phone) VALUE (?, ?, ?, ?)";
+
+    db.query(sql, [email, hashedPassword, full_name, phone], (err, result) => {
+      if (err)
+        return res.status(400).json({
+          error: "The email address already exists or there is a data error!",
+        });
+      res.json({ message: "Register successful!" });
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Server error!" });
+  }
+});
+```
+
+  ***Tạo API đăng nhập***
+
+```
+app.post("/api/login", (req, res) => {
+  const { email, password } = req.body;
+  const sql = "SELECT * FROM Users WHERE email = ?";
+
+  db.query(sql, [email], async (err, results) => {
+    if (err || results.length === 0) {
+      return res.status(401).json({ error: "Incorrect email or password!" });
+    }
+
+    const user = results[0];
+
+    // Compare the password entered by the user with the hashed password in the database.
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch)
+      return res.status(401).json({ error: "Incorrect email or password!" });
+
+    // JWT cards are valid for one day
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, {
+      expiresIn: "1d",
+    });
+    res.json({ message: "Login successful!", token: token });
+  });
+});
+```
