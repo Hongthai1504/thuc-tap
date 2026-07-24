@@ -119,3 +119,12 @@ app.post("/api/login", (req, res) => {
   });
 });
 ```
+
+## *Test thử API bằng Postman
+#### 1. API Đăng ký tài khoản
+<img width="1365" height="723" alt="API_Resgister" src="https://github.com/user-attachments/assets/b74dbfd8-9cdb-4119-b044-38c4d7a2b15b" />
+
+#### 2. API Đăng nhập và lấy JWT
+<img width="1365" height="723" alt="API_Login" src="https://github.com/user-attachments/assets/9215c2e1-9155-45d3-a7ea-d69981600d80" />
+
+
